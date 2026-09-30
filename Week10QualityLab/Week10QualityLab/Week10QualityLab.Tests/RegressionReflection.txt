@@ -1,0 +1,36 @@
+RegressionReflection.txt  -  ENSE707 Week 10 Lab (Activity 7.2)
+
+Procedure performed in Activity 7.1: the discount formula was temporarily changed back
+to "return price - discountPercent;", all tests were run, then the correct formula
+"return price - (price * discountPercent / 100);" was restored and all tests re-run.
+(Record your own Test Explorer results / screenshots here.)
+
+1. Which test detected the original discount defect?
+   ApplyDiscount_WhenPriceIs200AndDiscountIs20_Returns160. With only the formula line
+   reverted to "price - discountPercent" it fails: expected 160, actual 180. The final
+   total tests also fail: CalculateFinalTotal(200, 10, 15) gives 190 instead of 180, and
+   CalculateFinalTotal(80, 10, 15) gives 85 instead of 87 (as does the optional
+   125 / 20% exactly-$100 test). The validation tests still pass because Activity 7.1
+   only reverts the formula line, not the input checks. The $100 at 20% test, and the 0%
+   and 100% boundary tests, still pass on the old formula (100 - 20 = 80, 100 - 0 = 100,
+   100 - 100 = 0), which is why they cannot catch this defect.
+
+2. Why did the first $100, 20% test fail to expose the defect?
+   Because 100 - 20 = 80 and 100 - 20% of 100 = 80 give the same number. When the
+   price is 100, "percent" and "dollars" are numerically identical, so the wrong
+   formula and the right formula are indistinguishable. The test passed for the wrong
+   reason.
+
+3. Why is the $200, 20% test a stronger regression test?
+   At $200 the two interpretations diverge: 200 - 20 = 180 versus 200 - 40 = 160. The
+   test distinguishes the correct behaviour from the faulty one, and it is the exact
+   scenario a real customer reported. A good test input is one where a wrong
+   implementation gives a different answer.
+
+4. How do these tests help with defect prevention?
+   - They are automated, so every build re-checks the behaviour; if anyone reintroduces
+     the old formula the build goes red immediately (regression protection).
+   - Boundary tests (0%, 100%, $99 / $100) cover the places where pricing bugs cluster.
+   - Invalid input tests document and enforce the rules about what is allowed.
+   - They act as executable requirements, so future developers know the intended rules.
+   - Run in CI, they stop the defect reaching customers again.

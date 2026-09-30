@@ -1,0 +1,71 @@
+Root Cause Analysis Report
+
+Problem Statement:
+Customers received incorrect discounts. A $200 order with a 20% discount was charged as $180 instead of $160.
+A second related problem: an order total of exactly $100 was charged shipping instead of getting free shipping.
+
+Impact:
+- Customers were under-discounted (e.g. $20 off instead of $40 on a $200 order) and overcharged for shipping at exactly $100.
+- Loss of customer trust, extra support workload, possible refunds/complaints and reputational damage.
+- Pricing is a core business function, so the defect affected revenue accuracy and could have legal/consumer-law implications.
+- The team spent unplanned time on urgent fixes, and this is a repeat of earlier pricing defects.
+
+Immediate Cause:
+ApplyDiscount computed "price - discountPercent" (subtracting the percentage as a dollar amount) instead of
+"price - (price * discountPercent / 100)". IsEligibleForFreeShipping used "orderTotal > 100" instead of ">= 100".
+The code also had no input validation.
+
+5 Whys:
+1. Why did customers receive the wrong discount?
+   The system deducted the discount number as dollars rather than as a percentage of the price.
+
+2. Why did the code calculate the discount incorrectly?
+   The developer implemented the formula incorrectly and the requirement "percentage discount" was not translated
+   into an explicit formula or acceptance criteria. There was no code review check against the requirement.
+
+3. Why was this not detected by testing?
+   The only test used a $100 price with a 20% discount, where both the wrong and right formulas give $80, so it passed.
+   No boundary or invalid input tests existed.
+
+4. Why were the tests insufficient?
+   Tests were written quickly and only to confirm a "happy path". Test values were chosen without analysing what
+   inputs would distinguish right from wrong behaviour, and no systematic technique (boundary value analysis,
+   equivalence partitioning) was used. There was no test review.
+
+5. Why did the team not identify the missing cases earlier?
+   There was no defined test design process or definition of done for pricing features, no requirements-based
+   test checklist, and no review of past pricing defects to learn from them. Lessons from earlier incidents were not
+   turned into regression tests.
+
+Root Cause:
+Weak test design and process: the requirements were not converted into testable acceptance criteria, and test cases
+were chosen without boundary analysis or review, so a wrong formula passed a coincidentally correct test. Lack of
+learning from previous pricing defects let the same class of defect recur.
+
+Corrective Action:
+- Fixed ApplyDiscount to use price - (price * discountPercent / 100).
+- Changed free shipping check to orderTotal >= 100.
+- Added validation: price >= 0, 0 <= discountPercent <= 100, shippingCost >= 0 (ArgumentException).
+
+Preventive Actions:
+1. Write acceptance criteria with concrete examples (e.g. $200 at 20% = $160, $100 total = free shipping) before
+   coding, and use boundary value analysis and equivalence partitioning for every pricing rule.
+2. Add a pull request checklist: code review against the requirement, plus a required test review that checks test
+   values can actually distinguish correct from incorrect behaviour. Use GitHub Copilot to suggest edge cases, but
+   have a human verify them against requirements.
+3. Run all unit tests automatically in the CI pipeline on every commit/PR, block merges when tests fail, and track
+   pricing defects so each one gets a permanent regression test.
+
+Regression Test Added:
+- ApplyDiscount_WhenPriceIs200AndDiscountIs20_Returns160
+- ApplyDiscount_WhenDiscountIsZero_ReturnsOriginalPrice / ..._WhenDiscountIsOneHundred_ReturnsZero
+- ApplyDiscount invalid input tests (negative price, negative discount, discount over 100)
+- IsEligibleForFreeShipping_WhenOrderTotalIs100_ReturnsTrue and ..._WhenOrderTotalIs99_ReturnsFalse
+- CalculateFinalTotal tests for free-shipping and paid-shipping cases (plus exact $100 discounted total)
+
+Verification Plan:
+- Run all tests in Visual Studio Test Explorer and confirm they pass with the fixed code.
+- Re-introduce the old formula temporarily and confirm at least one test fails, then restore the fix (done in Activity 7.1).
+- Run the suite in CI on every pull request; review results before release.
+- Manual exploratory check of the customer scenarios ($200 at 20%, $100 order) in a test environment.
+- Monitor customer support tickets and order totals after release for further pricing discrepancies.

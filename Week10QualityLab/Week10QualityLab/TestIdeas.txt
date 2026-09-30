@@ -1,0 +1,95 @@
+TestIdeas.txt  -  ENSE707 Week 10 Lab (Activities 3.1 - 3.3)
+
+NOTE: These ideas are in the style of GitHub Copilot Chat's answer to the lab prompt.
+Replace or edit them with the actual output from YOUR Copilot Chat session before
+submitting, and re-check the Useful / Needs clarification / Not useful ratings.
+
+Prompt used:
+  For this C# OrderService class, suggest MSTest unit test cases. Focus on discount
+  percentage calculation, free shipping boundary values, invalid inputs, and final
+  total calculation.
+
+Test Idea 1: ApplyDiscount(200, 20) returns 160
+Expected behaviour: 20% of 200 is 40, so the result is 160. Directly reproduces the customer complaint.
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 2: ApplyDiscount(100, 0) returns 100
+Expected behaviour: A 0% discount leaves the price unchanged (lower boundary).
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 3: ApplyDiscount(100, 100) returns 0
+Expected behaviour: A 100% discount makes the order free (upper boundary).
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 4: ApplyDiscount with negative price throws ArgumentException
+Expected behaviour: Price below 0 is rejected.
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 5: ApplyDiscount with discount of 101 (and -5) throws ArgumentException
+Expected behaviour: Discount must be between 0 and 100 inclusive.
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 6: IsEligibleForFreeShipping(100) returns true
+Expected behaviour: Exactly $100 qualifies ("$100 or more").
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 7: IsEligibleForFreeShipping(99.99) returns false
+Expected behaviour: Just below the threshold does not qualify.
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 8: CalculateFinalTotal(200, 10, 15) returns 180
+Expected behaviour: Discounted price 180 is >= 100, so shipping is waived.
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 9: CalculateFinalTotal(80, 10, 15) returns 87
+Expected behaviour: 80 - 8 = 72, below 100, so 15 shipping is added.
+Useful / Needs clarification / Not useful: Useful
+
+Test Idea 10: ApplyDiscount(99.99, 15.5) returns exactly 84.4585
+Expected behaviour: Result keeps full decimal precision.
+Useful / Needs clarification / Not useful: Needs clarification (no requirement says whether to round to 2 decimal places, or how; money is normally rounded to cents)
+
+Test Idea 11: CalculateFinalTotal with negative shipping cost throws
+Expected behaviour: Negative shipping is rejected.
+Useful / Needs clarification / Not useful: Needs clarification (the original code had no such rule; it came from the code/fix, not a stated requirement)
+
+Test Idea 12: ApplyDiscount(100, 20) returns 80
+Expected behaviour: 100 - 20% = 80.
+Useful / Needs clarification / Not useful: Not useful (passes on the defective code too, so it cannot detect the defect)
+
+Test Idea 13: ApplyDiscount(200, 20) returns 180 (asserting what the current code does)
+Expected behaviour: Matches the current output.
+Useful / Needs clarification / Not useful: Not useful (locks in the bug; contradicts the real requirement)
+
+Test Idea 14: ApplyDiscount(null, NaN) handling
+Expected behaviour: Rejects null/NaN.
+Useful / Needs clarification / Not useful: Not useful (decimal cannot be null or NaN in C#, so this case cannot occur)
+
+------------------------------------------------------------------------------
+Activity 3.3 review questions
+
+Did Copilot suggest any unclear tests?
+  Yes. The rounding test (Idea 10) and the negative shipping test (Idea 11) depend on
+  rules nobody has stated. Idea 14 is unclear because it does not fit the C# type
+  system. These need a decision from the product owner before being trusted.
+
+Did Copilot miss any important boundary cases?
+  Yes, typically:
+  - Free shipping is decided on the DISCOUNTED total, so the important combined case
+    is a price that only reaches exactly $100 after discount (e.g. 125 with 20% = 100).
+  - Just above the threshold (100.01).
+  - Price of 0.
+  - Discounts at the edges combined with shipping (100% discount => total is only shipping).
+  I added some of these myself (see the "Optional extras" tests in OrderServiceTests.cs).
+
+Which tests are based on real requirements?
+  Ideas 1-9: the complaint ($200 at 20% should be $160), the stated rule ("free
+  shipping at $100 or more"), and sensible percentage limits (0 to 100).
+
+Which tests are based only on the current code?
+  Ideas 11, 13 and 14, and partly 10 and 12. They describe what the code happens to do
+  or what its structure suggests, not what the business asked for. Idea 13 is the
+  clearest danger: it would make the bug "correct".
+
+Key reminder: Copilot can suggest useful tests, but a human must check each one
+against the actual requirements.

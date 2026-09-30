@@ -1,0 +1,46 @@
+FinalReflection.txt  -  ENSE707 Week 10 Lab (Part 9)
+
+1. What was the original defect?
+   Two main defects in OrderService. ApplyDiscount subtracted the discount percentage as a dollar amount
+   (price - discountPercent), so a $200 order with 20% off cost $180 rather than $160. IsEligibleForFreeShipping used
+   "> 100" instead of ">= 100", so exactly $100 did not get free shipping. There was also no input validation.
+
+2. What was the root cause?
+   The requirements were not turned into concrete, testable examples and the tests were weak: the only test used
+   $100 at 20%, where the wrong formula happens to give the right answer. No boundary or invalid input tests were
+   written, and the team did not learn from earlier pricing defects. The underlying cause was a gap in test design
+   and review, not just a typo in the code.
+
+3. What tests did you add to prevent recurrence?
+   - $200 with 20% discount returns $160 (exposes the formula defect)
+   - 0% and 100% discount boundary tests
+   - Invalid input tests: negative price, negative discount, discount over 100
+   - Free shipping boundary tests at $100 and $99 (and $100.01)
+   - Final total tests with and without shipping, including a discounted total of exactly $100
+   - Negative shipping cost test
+
+4. How did GitHub Copilot help?
+   It quickly produced a list of edge cases and test ideas (boundaries, invalid input, final totals) that I could review
+   and build on, which saved time and prompted me to think about cases such as 0% and 100% discounts and values just
+   around the $100 threshold.
+
+5. What Copilot suggestions needed human review?
+   - Rounding expectations (no requirement defines decimal rounding)
+   - Negative shipping behaviour (not stated in the requirements)
+   - Tests that assert the current buggy output (e.g. $200 at 20% = $180)
+   - Weak tests that pass with the defect (e.g. $100 at 20% = $80)
+   - Impossible cases such as null/NaN for decimal
+   Copilot only sees the code, so it can copy a bug into a test; a human must check against the business requirement.
+
+6. What is the difference between fixing a defect and preventing a defect?
+   Fixing a defect corrects the specific faulty behaviour after it was found (changing the formula and comparison).
+   Preventing a defect changes the process so the same kind of defect is unlikely to occur or ship again: better
+   requirements, boundary-based test design, code and test review, regression tests, and automated CI checks. A fix
+   deals with this bug once; prevention addresses the cause and protects future changes.
+
+7. How does this lab relate to DevOps QA?
+   DevOps QA builds quality into every stage of the delivery pipeline. The automated MSTest suite is the kind of
+   check that runs in CI on every commit, giving fast feedback and blocking a bad change before release (shift left).
+   Regression tests keep old defects from returning, RCA feeds lessons from production incidents back into the
+   process (continuous improvement), and tools such as Copilot can speed up test design while humans keep
+   responsibility for correctness.

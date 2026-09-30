@@ -1,0 +1,31 @@
+InitialObservations.txt  -  ENSE707 Week 10 Lab (Activity 2.2)
+Written BEFORE any tests, from reading the original OrderService code only.
+
+1. What does ApplyDiscount appear to do?
+   It returns price - discountPercent. In other words it subtracts the discount
+   number from the price as if it were a dollar amount, not a percentage.
+
+2. What assumption does it make about discountPercent?
+   It assumes discountPercent is a flat dollar amount. The parameter name and the
+   business requirement ("20% discount") say it is a percentage, so the code's
+   assumption contradicts the name and the requirement.
+
+3. What happens when the discount is 20?
+   A $200 order returns 200 - 20 = $180 (only $20 off, i.e. a 10% discount).
+   The correct result is 200 - (200 x 20 / 100) = 200 - 40 = $160. This matches the
+   customer complaint. Note that $100 with 20 gives $80 either way, so that case
+   hides the defect.
+
+4. Should free shipping apply when the total is exactly $100?
+   Yes. The business rule is "free shipping applies when the discounted order total
+   is $100 or more". The code uses orderTotal > 100, so exactly $100 is wrongly
+   charged shipping (boundary / off-by-one comparison defect).
+
+5. What invalid inputs should the code reject?
+   - Negative price
+   - Negative discountPercent
+   - discountPercent greater than 100 (would give a negative price)
+   - Negative shippingCost
+   The original code rejects none of these. Unspecified cases to clarify with the
+   business: price of 0, rounding of amounts with many decimal places, and whether
+   shipping is waived based on the discounted total (assumed yes, per the rule).

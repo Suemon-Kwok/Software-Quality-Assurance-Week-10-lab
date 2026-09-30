@@ -1,0 +1,28 @@
+// Original defective code from Part 2 (for reference / Activity 7.1 only).
+namespace QualityLab
+{
+    public class OrderService
+    {
+        public decimal ApplyDiscount(decimal price, decimal discountPercent)
+        {
+            return price - discountPercent;   // DEFECT: subtracts the percent as a dollar amount
+        }
+
+        public bool IsEligibleForFreeShipping(decimal orderTotal)
+        {
+            return orderTotal > 100;          // DEFECT: boundary, should be >=
+        }
+
+        public decimal CalculateFinalTotal(decimal price, decimal discountPercent, decimal shippingCost)
+        {
+            var discountedPrice = ApplyDiscount(price, discountPercent);
+
+            if (IsEligibleForFreeShipping(discountedPrice))
+            {
+                shippingCost = 0;
+            }
+
+            return discountedPrice + shippingCost;
+        }
+    }
+}
